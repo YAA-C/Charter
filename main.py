@@ -1,6 +1,8 @@
+import json
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic
+from src.LoadFile import LoadFile
 
 
 class CharterWorker:
@@ -19,7 +21,15 @@ class CharterWorker:
 
 
     def handleData(self, channel: BlockingChannel, method: Basic.Deliver, body: bytes) -> None:
-        print(f" [R] {self.queueName}: {str(body, encoding= 'utf-8')}")
+        print(f" [R] {self.queueName}: Starting Worker...")
+        try:
+            workObject: dict = json.loads(str(body, encoding= "utf-8"))
+            loadFile: LoadFile = LoadFile(workObject["url"])
+            file: str = loadFile.startLoading()
+            print(file)
+        except Exception as e:
+            print(e)
+        print(" [R]: Worker Completed.")
         channel.basic_ack(delivery_tag= method.delivery_tag)
 
 
