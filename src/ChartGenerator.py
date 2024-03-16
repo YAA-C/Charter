@@ -6,6 +6,7 @@ class ChartGenerator:
     def __init__(self, filePath: str) -> None:
         self.filePath: str = filePath
         self.df: pd.DataFrame = pd.read_csv(filePath)
+        self.reportData: dict = {}
 
 
     def startReportGeneration(self) -> None:
@@ -21,6 +22,10 @@ class ChartGenerator:
         self.report_10()
 
 
+    def getReportData(self) -> dict:
+        return self.reportData
+
+
     def report_1(self) -> None:
         dfWeapon: pd.DataFrame = self.df.copy()
 
@@ -30,8 +35,10 @@ class ChartGenerator:
         data_int = weapon_dmg_sum.values.astype(int)
         labels = [label.replace('weapon_', '') for label in weapon_dmg_sum.index]
 
-        print("Labels for Q.No. 1", labels)
-        print("Data for Q.No. 1", data_int.tolist())
+        self.reportData["report_1"] = {
+            "labels" : labels,
+            "data" : data_int.tolist()
+        }
 
 
     def report_2(self) -> None:
@@ -53,8 +60,10 @@ class ChartGenerator:
         df_copy['targetHitArea'] = df_copy['targetHitArea'].map(hit_area_mapping)
         hit_area_counts = df_copy['targetHitArea'].value_counts()
 
-        print("Labels for Q.No. 2", hit_area_counts.index.tolist())
-        print("Data for Q.No. 2", hit_area_counts.values.tolist())
+        self.reportData["report_2"] = {
+            "labels" : hit_area_counts.index.tolist(),
+            "data" : hit_area_counts.values.tolist()
+        }
 
 
     def report_3(self) -> None:
@@ -62,11 +71,14 @@ class ChartGenerator:
 
         category_dmg_sum = dfCat.groupby("weaponCategory")["dmgDone"].sum()
         category_dmg_sum = category_dmg_sum.sort_values(ascending=False)
+        data_int = category_dmg_sum.values.astype(int)
 
         labels = [label.replace('weapon_category_', '') for label in category_dmg_sum.index]
 
-        print("Labels for Q.No. 3", labels)
-        print("Data for Q.No. 3", category_dmg_sum.values.tolist())
+        self.reportData["report_3"] = {
+            "labels" : labels,
+            "data" : data_int.tolist()
+        }
 
 
     def report_4(self) -> None:
@@ -75,8 +87,8 @@ class ChartGenerator:
         def analyze_movement_types(dataframe: pd.DataFrame):
             filtered_data: pd.DataFrame =  dataframe[dataframe['targetId'].notna()]
 
-            crouching_count = filtered_data['isCrouching'].sum() if 'isCrouching' in filtered_data else 0
-            jumping_count = filtered_data['isInAir'].sum() if 'isInAir' in filtered_data else 0
+            crouching_count = int(filtered_data['isCrouching'].sum()) if 'isCrouching' in filtered_data else 0
+            jumping_count = int(filtered_data['isInAir'].sum()) if 'isInAir' in filtered_data else 0
             no_movement_count = len(filtered_data) - (crouching_count + jumping_count)
 
             return crouching_count, jumping_count, no_movement_count
@@ -100,8 +112,10 @@ class ChartGenerator:
 
         labels, sizes = zip(*sorted(zip(labels, sizes), key=lambda x: x[1], reverse=True))
 
-        print("Labels", labels)
-        print("Data", sizes)
+        self.reportData["report_4"] = {
+            "labels" : list(labels),
+            "data" : list(sizes)
+        }
         
 
     def report_5(self) -> None:        
@@ -110,14 +124,19 @@ class ChartGenerator:
         distance_columns = ['distToTarget', 'weaponCategory', 'weaponUsed']
         filtered_data = dfQ5[distance_columns].dropna()
 
-        distance_bins = [0, 50, 100, 200, 300, 500, float('inf')]
-        distance_labels = ['0-50', '50-100', '100-200', '200-300', '300-500', '500+']
+        distance_bins = [0, 50, 200, 400, 600, 800, 1000, float('inf')]
+        distance_labels = ['0-50', '50-200', '200-400', '400-600', '600-800', '800-1000', '1000+']
 
         filtered_data['DistanceCategory'] = pd.cut(filtered_data['distToTarget'], bins=distance_bins, labels=distance_labels, right=False)
         grouped_data = filtered_data.groupby(['weaponCategory', 'weaponUsed', 'DistanceCategory']).size().reset_index(name='Count')
         grouped_data = grouped_data.sort_values(['weaponCategory', 'weaponUsed', 'DistanceCategory'])
 
         unique_weapon_categories = grouped_data['weaponCategory'].unique()
+        
+        # preparing the empty report object
+        self.reportData["report_5"] = dict()
+        for category in unique_weapon_categories:
+            self.reportData["report_5"][category] = dict()
 
         for category in unique_weapon_categories:
             category_data = grouped_data[grouped_data['weaponCategory'] == category]
@@ -132,8 +151,10 @@ class ChartGenerator:
                     values = weapon_data['Count'].tolist()
 
                     # Print precomputed values
-                    print(f"Labels for {weapon} in {category} Category: {labels}")
-                    print(f"Data for {weapon} in {category} Category: {values}")
+                    self.reportData["report_5"][category][weapon] = {
+                        "labels" : labels,
+                        "data" : values
+                    }
 
 
     def report_6(self) -> None:
@@ -153,8 +174,10 @@ class ChartGenerator:
         labels = ['Obstructed Shots', 'Non-Obstructed Shots']
         sizes = [obstructed_shots, total_shots - obstructed_shots]
 
-        print("Labels for Q. No. 6: " + str(labels))
-        print("Data for Q. No. 6: " + str(sizes))
+        self.reportData["report_6"] = {
+            "labels" : str(labels),
+            "data" : sizes
+        }
         
 
     def report_7(self) -> None:
@@ -164,16 +187,18 @@ class ChartGenerator:
         df_histo = pd.DataFrame(data)
 
         def compute_histogram_data(df_histo: pd.DataFrame, column_name: str, bin_width=1):
-            min_value = df_histo[column_name].min()
-            max_value = df_histo[column_name].max()
+            min_value = -90  # min value for pitch
+            max_value = 90  # max value for pitch
             bins = np.arange(min_value, max_value + bin_width, bin_width)
             hist, edges = np.histogram(df_histo[column_name], bins=bins)
             return hist, edges[:-1]
 
         hist, edges = compute_histogram_data(df_histo, 'pitch')
 
-        print("Hist for Q.No. 7", hist.tolist())
-        print("Edges for Q.No. 7", edges.tolist())
+        self.reportData["report_7"] = {
+            "labels" : hist.tolist(),
+            "data" : edges.tolist()
+        }
 
 
     def report_8(self) -> None:
@@ -187,9 +212,11 @@ class ChartGenerator:
         labels = ['Average Utility Damage Done', 'Average Support Utility Used']
         values = [average_utility_dmg_done, average_support_utility_used]
 
-        print(f"Label for Q.No. 8 : {labels}")
-        print(f"Data for Q.No. 8 : {values}")
-        
+        self.reportData["report_8"] = {
+            "labels" : labels,
+            "data" : values
+        }
+    
 
     def report_9(self) -> None:
         dfSnipe: pd.DataFrame = self.df.copy()
@@ -200,8 +227,15 @@ class ChartGenerator:
         labels = ['Scoping', 'Not Scoping']
         values = [scoping_counts.get(True, 0), scoping_counts.get(False, 0)]
 
-        print(f"Labels for Q.No.9 Sniper: {labels}")
-        print(f"Data for Q.No.9 Sniper: {values}")
+        self.reportData["report_9"] = {
+            "weapon_sniper" : dict(),
+            "weapon_ar" : dict()
+        }
+
+        self.reportData["report_9"]["weapon_sniper"] = {
+            "labels" : labels,
+            "data" : values
+        }
 
         # for Aug and SG556
         dfScope: pd.DataFrame = self.df.copy()
@@ -212,9 +246,10 @@ class ChartGenerator:
         labels = ['Scoping', 'Not Scoping']
         values = [scoping_counts.get(True, 0), scoping_counts.get(False, 0)]
 
-        print("\n")
-        print(f"Labels for Scoping while using AR (weapon_aug and weapon_sg556): {labels}")
-        print(f"Data for Scoping while using AR (weapon_aug and weapon_sg556): {values}")
+        self.reportData["report_9"]["weapon_ar"] = {
+            "labels" : labels,
+            "data" : values
+        }
 
 
     def report_10(self) -> None:
@@ -233,5 +268,7 @@ class ChartGenerator:
         labels = ['Blind Shots', 'Not Blind Shots']
         sizes = [blind_shot_count, not_blind_shot_count]
 
-        print(f"Label: {labels}")
-        print(f"Data: {sizes}")
+        self.reportData["report_10"] = {
+            "labels" : labels,
+            "data" : sizes
+        }

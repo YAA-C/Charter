@@ -28,9 +28,12 @@ class CharterWorker:
             loadFile: LoadFile = LoadFile(workObject["url"])
             filePath: str = loadFile.startLoading()
             print("Loaded file:", filePath)
+            print("Starting Report Generation...")
             chartGenerator: ChartGenerator = ChartGenerator(filePath)
             chartGenerator.startReportGeneration()
-            print("Finished report generation.")
+            reportData = chartGenerator.getReportData()
+            print("Finished Report Generation.")
+            print("Starting Fight Generation...")
         except Exception as e:
             print(e)
         print(" [R]: Worker Completed.")
@@ -53,6 +56,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # main()
-    chartGenerator: ChartGenerator = ChartGenerator("./download/sample-notCheating.csv")
-    chartGenerator.startReportGeneration()
+    main()
