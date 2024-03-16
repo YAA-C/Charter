@@ -3,6 +3,7 @@ import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic
 from src.LoadFile import LoadFile
+from src.ChartGenerator import ChartGenerator
 
 
 class CharterWorker:
@@ -25,8 +26,14 @@ class CharterWorker:
         try:
             workObject: dict = json.loads(str(body, encoding= "utf-8"))
             loadFile: LoadFile = LoadFile(workObject["url"])
-            file: str = loadFile.startLoading()
-            print(file)
+            filePath: str = loadFile.startLoading()
+            print("Loaded file:", filePath)
+            print("Starting Report Generation...")
+            chartGenerator: ChartGenerator = ChartGenerator(filePath)
+            chartGenerator.startReportGeneration()
+            reportData = chartGenerator.getReportData()
+            print("Finished Report Generation.")
+            print("Starting Fight Generation...")
         except Exception as e:
             print(e)
         print(" [R]: Worker Completed.")
