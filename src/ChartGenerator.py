@@ -206,8 +206,8 @@ class ChartGenerator:
         utility_columns = ['utilityDmgDone', 'supportUtilityUsed']
 
         filtered_data = df_copy[utility_columns].dropna()
-        average_utility_dmg_done = filtered_data['utilityDmgDone'].mean()
-        average_support_utility_used = filtered_data['supportUtilityUsed'].mean()
+        average_utility_dmg_done = float(filtered_data['utilityDmgDone'].mean())
+        average_support_utility_used = float(filtered_data['supportUtilityUsed'].mean())
 
         labels = ['Average Utility Damage Done', 'Average Support Utility Used']
         values = [average_utility_dmg_done, average_support_utility_used]
@@ -225,7 +225,7 @@ class ChartGenerator:
         scoping_counts = sniper_data['isScoping'].value_counts()
 
         labels = ['Scoping', 'Not Scoping']
-        values = [scoping_counts.get(True, 0), scoping_counts.get(False, 0)]
+        values = [int(scoping_counts.get(True, 0)), int(scoping_counts.get(False, 0))]
 
         self.reportData["report_9"] = {
             "weapon_sniper" : dict(),
@@ -244,7 +244,7 @@ class ChartGenerator:
         scoping_counts = ar_data['isScoping'].value_counts()
 
         labels = ['Scoping', 'Not Scoping']
-        values = [scoping_counts.get(True, 0), scoping_counts.get(False, 0)]
+        values = [int(scoping_counts.get(True, 0)), int(scoping_counts.get(False, 0))]
 
         self.reportData["report_9"]["weapon_ar"] = {
             "labels" : labels,
