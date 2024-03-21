@@ -23,6 +23,7 @@ class ChartGenerator:
 
 
     def getReportData(self) -> dict:
+        self.reportData["upload_type"] = "all_reports"
         return self.reportData
 
 
@@ -128,7 +129,7 @@ class ChartGenerator:
         distance_labels = ['0-50', '50-200', '200-400', '400-600', '600-800', '800-1000', '1000+']
 
         filtered_data['DistanceCategory'] = pd.cut(filtered_data['distToTarget'], bins=distance_bins, labels=distance_labels, right=False)
-        grouped_data = filtered_data.groupby(['weaponCategory', 'weaponUsed', 'DistanceCategory']).size().reset_index(name='Count')
+        grouped_data = filtered_data.groupby(['weaponCategory', 'weaponUsed', 'DistanceCategory'], observed= False).size().reset_index(name='Count')
         grouped_data = grouped_data.sort_values(['weaponCategory', 'weaponUsed', 'DistanceCategory'])
 
         unique_weapon_categories = grouped_data['weaponCategory'].unique()
@@ -159,13 +160,12 @@ class ChartGenerator:
 
     def report_6(self) -> None:
         df_copy: pd.DataFrame = self.df.copy()
+        df_copy.dropna(subset=["targetId"], inplace= True)
 
         def count_obstructed_shots(dataframe: pd.DataFrame):
             total_shots = len(dataframe)
 
-            dataframe['isFlashed'] = dataframe['isFlashed'].fillna(False)
-            dataframe['shotTargetThroughSmoke'] = dataframe['shotTargetThroughSmoke'].fillna(False)
-            obstructed_shots = len(dataframe[(dataframe['isFlashed'].astype(bool) | dataframe['shotTargetThroughSmoke'].astype(bool))])
+            obstructed_shots = int(((df_copy['isFlashed'] > 0) | (df_copy['shotTargetThroughSmoke'].astype(bool))).sum())
 
             return total_shots, obstructed_shots
         
