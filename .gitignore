@@ -3,3 +3,6 @@ __pycache__
 
 download/*
 !download/.gitkeep
+
+logs/*
+!logs/.gitkeep

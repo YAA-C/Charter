@@ -6,6 +6,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic
 from src.LoadFile import LoadFile
 from src.ChartGenerator import ChartGenerator
+from src.utils.Logger import log, logp, compileLogs
 
 
 class CharterWorker:
@@ -28,29 +29,32 @@ class CharterWorker:
 
 
     def handleData(self, channel: BlockingChannel, method: Basic.Deliver, body: bytes) -> None:
-        print(f" [R] {self.queueName}: Starting Worker...")
+        log("Job Received.")
         try:
             workObject: dict = json.loads(str(body, encoding= "utf-8"))
             loadFile: LoadFile = LoadFile(workObject["url"])
             filePath: str = loadFile.startLoading()
             # filePath: str = "./download/sample-notCheating.csv"
-            print("Loaded file:", filePath)
-            print("Starting Report Generation...")
+            log("Loaded file:", filePath)
+            charterData: list = []
+            log("Starting Report Generation...")
             chartGenerator: ChartGenerator = ChartGenerator(filePath)
             chartGenerator.startReportGeneration()
-            reportData = chartGenerator.getReportData()
-            print("Finished Report Generation.")
+            charterData.append(chartGenerator.getReportData())
+            log("Finished Report Generation.")
             self.channel.basic_publish(
                 exchange= "upload_exchange", 
                 routing_key="to_uploader", 
-                body= json.dumps(reportData)
+                body= json.dumps(charterData)
             )
-            print("Sent Data to RabbitMQ.")
+            log("Sent Data to RabbitMQ.")
         except Exception as e:
-            print(traceback.format_exc())
-            print(e)
-        print(" [R]: Worker Completed.")
-        channel.basic_ack(delivery_tag= method.delivery_tag)
+            log(traceback.format_exc())
+            channel.basic_nack(delivery_tag= method.delivery_tag)
+        else:
+            channel.basic_ack(delivery_tag= method.delivery_tag)
+        finally:
+            log("Job Completed.")
 
 
     def work(self) -> None:
@@ -59,13 +63,22 @@ class CharterWorker:
             queue= "to_charter", 
             on_message_callback= lambda channel, method, _, body: self.handleData(channel, method, body)
         )
-        print("Listening on:", self.queueName)
+        log("Listening on:", self.queueName)
         self.channel.start_consuming()
 
 
 def main() -> None:
-    charterWorker: CharterWorker = CharterWorker()
-    charterWorker.work()
+    try:
+        log("Starting Worker...")
+        charterWorker: CharterWorker = CharterWorker()
+    except Exception as e:
+        log("Could not connect to RabbitMQ...")
+        log(traceback.format_exc())
+    else:
+        charterWorker.work()
+    finally:
+        log("Exitting Worker...")
+        compileLogs(["CW"])
 
 
 if __name__ == "__main__":
