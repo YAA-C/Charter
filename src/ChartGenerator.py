@@ -23,8 +23,14 @@ class ChartGenerator:
 
 
     def getReportData(self) -> dict:
-        self.reportData["upload_type"] = "all_reports"
-        return self.reportData
+        data: dict = {
+            "metadata": {
+                "type": "REPORT"
+            },
+            "data": self.reportData
+        }
+
+        return data
 
 
     def report_1(self) -> None:
