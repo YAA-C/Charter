@@ -3,10 +3,11 @@ import numpy as np
 
 
 class ChartGenerator:
-    def __init__(self, filePath: str) -> None:
+    def __init__(self, filePath: str, matchId: str) -> None:
         self.filePath: str = filePath
         self.df: pd.DataFrame = pd.read_csv(filePath)
         self.reportData: dict = {}
+        self.matchId = matchId
 
 
     def startReportGeneration(self) -> None:
@@ -25,7 +26,18 @@ class ChartGenerator:
     def getReportData(self) -> dict:
         data: dict = {
             "metadata": {
-                "type": "REPORT"
+                "type": "REPORT",
+                "match_id": self.matchId,
+                "report_types": {
+                    "report_1": "BAR",
+                    "report_2": "BAR",
+                    "report_3": "PIE",
+                    "report_4": "PIE",
+                    "report_6": "PIE",
+                    "report_7": "HIST",
+                    "report_8": "BAR",
+                    "report_10": "PIE",
+                }
             },
             "data": self.reportData
         }

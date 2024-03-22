@@ -33,12 +33,14 @@ class CharterWorker:
         try:
             workObject: dict = json.loads(str(body, encoding= "utf-8"))
             loadFile: LoadFile = LoadFile(workObject["url"])
+            matchId: str = str(workObject["match_id"])
             filePath: str = loadFile.startLoading()
+            # matchId: str = "TEST"
             # filePath: str = "./download/sample-notCheating.csv"
             log("Loaded file:", filePath)
             charterData: list = []
             log("Starting Report Generation...")
-            chartGenerator: ChartGenerator = ChartGenerator(filePath)
+            chartGenerator: ChartGenerator = ChartGenerator(filePath, matchId)
             chartGenerator.startReportGeneration()
             charterData.append(chartGenerator.getReportData())
             log("Finished Report Generation.")
