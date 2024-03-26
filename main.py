@@ -3,7 +3,7 @@ import traceback
 import sys
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.spec import Basic
+from pika.spec import Basic, BasicProperties
 from src.LoadFile import LoadFile
 from src.ChartGenerator import ChartGenerator
 from src.utils.Logger import log, logp, compileLogs
@@ -28,6 +28,15 @@ class CharterWorker:
         self.channel.queue_bind(queue= "to_uploader", exchange= "upload_exchange")
 
 
+    def rejectMessage(self, channel: BlockingChannel, method: Basic.Deliver) -> None:
+        if(method.redelivered):
+            log("Discarding message from queue...")
+            channel.basic_reject(delivery_tag= method.delivery_tag, requeue= False)
+        else:
+            log("Requeuing message...")
+            channel.basic_reject(delivery_tag= method.delivery_tag, requeue= True)
+
+
     def handleData(self, channel: BlockingChannel, method: Basic.Deliver, body: bytes) -> None:
         log("Job Received.")
         try:
@@ -50,9 +59,9 @@ class CharterWorker:
                 body= json.dumps(charterData)
             )
             log("Sent Data to RabbitMQ.")
-        except Exception as e:
+        except Exception:
             log(traceback.format_exc())
-            channel.basic_nack(delivery_tag= method.delivery_tag)
+            self.rejectMessage(channel, method)
         else:
             channel.basic_ack(delivery_tag= method.delivery_tag)
         finally:
