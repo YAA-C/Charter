@@ -104,7 +104,7 @@ class ChartGenerator:
         df_copy: pd.DataFrame = self.df.copy()
 
         def analyze_movement_types(dataframe: pd.DataFrame):
-            filtered_data: pd.DataFrame =  dataframe[dataframe['targetId'].notna()]
+            filtered_data: pd.DataFrame =  dataframe[dataframe['isHurt'] == False]
 
             crouching_count = int(filtered_data['isCrouching'].sum()) if 'isCrouching' in filtered_data else 0
             jumping_count = int(filtered_data['isInAir'].sum()) if 'isInAir' in filtered_data else 0
@@ -177,8 +177,7 @@ class ChartGenerator:
 
 
     def report_6(self) -> None:
-        df_copy: pd.DataFrame = self.df.copy()
-        df_copy.dropna(subset=["targetId"], inplace= True)
+        df_copy: pd.DataFrame = self.df[self.df["isHurt"] == False].copy()
 
         def count_obstructed_shots(dataframe: pd.DataFrame):
             total_shots = len(dataframe)
