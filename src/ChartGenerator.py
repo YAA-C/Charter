@@ -177,12 +177,17 @@ class ChartGenerator:
 
 
     def report_6(self) -> None:
-        df_copy: pd.DataFrame = self.df[self.df["isHurt"] == False].copy()
+        df_copy: pd.DataFrame = self.df[self.df["isHurt"] == True].copy()
 
         def count_obstructed_shots(dataframe: pd.DataFrame):
             total_shots = len(dataframe)
 
-            obstructed_shots = int(((df_copy['isFlashed'] > 0) | (df_copy['shotTargetThroughSmoke'].astype(bool))).sum())
+            obstructed_shots = int(
+                (
+                    (df_copy['isFlashed'] > 0) | 
+                    (df_copy['shotTargetThroughSmoke'].astype(bool))
+                ).sum()
+            )
 
             return total_shots, obstructed_shots
         
@@ -192,7 +197,7 @@ class ChartGenerator:
         sizes = [obstructed_shots, total_shots - obstructed_shots]
 
         self.reportData["report_6"] = {
-            "labels" : str(labels),
+            "labels" : labels,
             "data" : sizes
         }
         
