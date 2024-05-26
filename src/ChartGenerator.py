@@ -213,8 +213,8 @@ class ChartGenerator:
         hist, edges = compute_histogram_data(df_histo, 'pitch')
 
         self.reportData["report_7"] = {
-            "labels" : hist.tolist(),
-            "data" : edges.tolist()
+            "labels" : edges.tolist(),
+            "data" : hist.tolist()
         }
 
 
@@ -238,7 +238,7 @@ class ChartGenerator:
     def report_9(self) -> None:
         dfSnipe: pd.DataFrame = self.df.copy()
 
-        sniper_data = dfSnipe[dfSnipe['weaponCategory'] == 'weapon_category_sniper']
+        sniper_data = dfSnipe[(dfSnipe['isHurt'] != False) & (dfSnipe['weaponCategory'] == 'weapon_category_sniper')]
         scoping_counts = sniper_data['isScoping'].value_counts()
 
         labels = ['Scoping', 'Not Scoping']
@@ -257,7 +257,11 @@ class ChartGenerator:
         # for Aug and SG556
         dfScope: pd.DataFrame = self.df.copy()
 
-        ar_data = dfScope[(dfScope['weaponCategory'] == 'weapon_category_ar') & ((dfScope['weaponUsed'] == 'weapon_aug') | (dfScope['weaponUsed'] == 'weapon_sg556'))]
+        ar_data = dfScope[
+            (dfScope['isHurt'] != False) & 
+            (dfScope['weaponCategory'] == 'weapon_category_ar') & 
+            ((dfScope['weaponUsed'] == 'weapon_aug') | (dfScope['weaponUsed'] == 'weapon_sg556'))
+        ]
         scoping_counts = ar_data['isScoping'].value_counts()
 
         labels = ['Scoping', 'Not Scoping']
